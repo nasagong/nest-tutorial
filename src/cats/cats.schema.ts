@@ -1,7 +1,8 @@
+import { Comments } from '../comments/comments.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { Document, SchemaOptions } from 'mongoose';
+import { ApiProperty } from '@nestjs/swagger';
 
 const options: SchemaOptions = {
   timestamps: true,
@@ -10,14 +11,10 @@ const options: SchemaOptions = {
 @Schema(options)
 export class Cat extends Document {
   @ApiProperty({
-    example: 'tset@naver.com',
+    example: 'amamov@kakao.com',
     description: 'email',
     required: true,
   })
-  /**
-   * Prop에서 required를 true로 설정한 상태라면, DTO에서 validatoin exceptiond이 발생해도
-   * DB에 저장은 됨
-   * */
   @Prop({
     required: true,
     unique: true,
@@ -27,54 +24,65 @@ export class Cat extends Document {
   email: string;
 
   @ApiProperty({
-    example: 'red',
+    example: 'amamov',
     description: 'name',
     required: true,
   })
-  @Prop()
+  @Prop({
+    required: true,
+  })
   @IsString()
   @IsNotEmpty()
   name: string;
 
   @ApiProperty({
-    example: '12345',
+    example: '23810',
     description: 'password',
     required: true,
   })
-  @Prop()
+  @Prop({
+    required: true,
+  })
   @IsString()
   @IsNotEmpty()
   password: string;
 
-  @Prop()
+  @Prop({
+    default:
+      'https://github.com/amamov/NestJS-solid-restapi-boilerplate/raw/main/docs/images/1.jpeg',
+  })
   @IsString()
   imgUrl: string;
-
-  @Prop()
-  @IsString()
-  forTest: string;
 
   readonly readOnlyData: {
     id: string;
     email: string;
     name: string;
+    imgUrl: string;
+    comments: Comments[];
   };
+
+  readonly comments: Comments[];
 }
 
-export const CatSchema = SchemaFactory.createForClass(Cat);
-/**
- *  when you access the readOnlyData property on a Cat model,
- * Mongoose will invoke the get function, which will generate an object with the id,
- * email, and name properties from the Cat document.
- * This object is then returned as the value of the readOnlyData property.
- */
+const _CatSchema = SchemaFactory.createForClass(Cat);
 
-CatSchema.virtual('readOnlyData').get(function (this: Cat) {
+_CatSchema.virtual('readOnlyData').get(function (this: Cat) {
   return {
     id: this.id,
     email: this.email,
     name: this.name,
     imgUrl: this.imgUrl,
-    forTest: this.forTest,
+    comments: this.comments,
   };
 });
+
+_CatSchema.virtual('comments', {
+  ref: 'comments',
+  localField: '_id', //
+  foreignField: 'info', // info를 기준으로 가져옴 (info === id면 comments를 긁어오는듯)
+});
+_CatSchema.set('toObject', { virtuals: true });
+_CatSchema.set('toJSON', { virtuals: true });
+
+export const CatSchema = _CatSchema;

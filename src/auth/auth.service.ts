@@ -15,7 +15,7 @@ export class AuthService {
     const { email, password } = data;
 
     const cat = await this.catRepository.findCatByEmail(email);
-
+    // user info 객체 그대로 반환됨. 없는 정보면 null
     if (!cat) {
       throw new UnauthorizedException('이메일과 비밀번호를 확인해주세요.');
     }
